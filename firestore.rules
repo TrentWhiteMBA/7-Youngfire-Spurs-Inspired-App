@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email in ['collegefootballplayoffs56@gmail.com', 'trentwhite0308@gmail.com'] ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 3. User Profiles Collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isAdmin()) && isValidId(userId);
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // 4. Prayer Requests Collection
+    match /prayers/{prayerId} {
+      allow read: if true;
+      allow create: if isValidId(prayerId) && (
+        isSignedIn() || (request.resource.data.cause is string && request.resource.data.cause.size() <= 1000)
+      );
+      allow update: if isValidId(prayerId) && (
+        isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.authorId) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['prayedCount', 'intercessors'])
+      );
+      allow delete: if isValidId(prayerId) && (
+        isAdmin() || (isSignedIn() && request.auth.uid == resource.data.authorId)
+      );
+    }
+
+    // 5. Gatherings and Small Group Schedule
+    match /gatherings/{gatheringId} {
+      allow read: if true;
+      allow create, update, delete: if isValidId(gatheringId) && isAdmin();
+    }
+  }
+}

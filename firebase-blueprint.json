@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and discipleship identity for YoungFire sanctuary members",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "maxLength": 100 },
+        "gender": { "type": "string", "enum": ["male", "female"] },
+        "avatar": { "type": "string", "maxLength": 500 },
+        "birthday": { "type": "string", "maxLength": 5, "pattern": "^[0-1][0-9]-[0-3][0-9]$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name"]
+    },
+    "PrayerRequest": {
+      "title": "PrayerRequest",
+      "description": "Community prayer request and intercessory prayer watch",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "cause": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["active", "answered", "completed"] },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "prayedCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "cause", "status"]
+    },
+    "Gathering": {
+      "title": "Gathering",
+      "description": "Sanctuary gathering, small group, and fellowship session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "time": { "type": "string", "maxLength": 50 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "isZoom": { "type": "boolean" },
+        "zoomUrl": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["active", "canceled", "rescheduled"] }
+      },
+      "required": ["id", "title", "date", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "UserProfile" },
+      "description": "User profile records for disciples and facilitators"
+    },
+    "/prayers/{prayerId}": {
+      "schema": { "$ref": "PrayerRequest" },
+      "description": "Fellowship prayer requests"
+    },
+    "/gatherings/{gatheringId}": {
+      "schema": { "$ref": "Gathering" },
+      "description": "Sanctuary gathering and fellowship schedule"
+    }
+  }
+}
